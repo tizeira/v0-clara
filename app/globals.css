@@ -1,0 +1,409 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Enhanced glass effect utilities */
+.backdrop-blur-3xl {
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+}
+
+/* Light Refraction Effects */
+.glass-refraction {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.glass-refraction::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.05) 75%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  animation: refraction-shimmer 4s ease-in-out infinite;
+}
+
+.glass-refraction::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.1)
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  animation: refraction-rotate 8s linear infinite;
+  filter: blur(1px);
+}
+
+/* Light refraction overlay for main widget */
+.light-refraction-overlay {
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  animation: light-sweep 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Glass surface with subtle distortion */
+.glass-surface {
+  position: relative;
+  transform: perspective(1000px) rotateX(0.5deg) rotateY(-0.5deg);
+  transition: transform 0.3s ease;
+}
+
+.glass-surface:hover {
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+}
+
+/* Floating glass button refraction */
+.floating-glass {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.floating-glass::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  animation: floating-refraction 3s ease-in-out infinite;
+}
+
+/* Light ray animation for floating button */
+.light-ray-animation {
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: light-ray-spin 4s linear infinite;
+  opacity: 0.6;
+}
+
+/* Message bubble refraction effects */
+.glass-message {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.assistant-message-refraction::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 70%,
+    transparent 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  animation: message-refraction 5s ease-in-out infinite;
+}
+
+.user-message-refraction::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(60deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+  animation: user-message-refraction 4s ease-in-out infinite reverse;
+}
+
+/* Message refraction effect */
+.message-refraction-effect {
+  background: radial-gradient(
+    ellipse at top left,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  animation: message-light-dance 3s ease-in-out infinite;
+}
+
+/* Custom scrollbar with glass effect */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: scrollbar-refraction 2s ease-in-out infinite;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+}
+
+/* Keyframe Animations for Light Refraction */
+@keyframes refraction-shimmer {
+  0%,
+  100% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(100%) skewX(-15deg);
+    opacity: 1;
+  }
+}
+
+@keyframes refraction-rotate {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.02);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes light-sweep {
+  0%,
+  100% {
+    transform: translateX(-100%) rotate(45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(100%) rotate(45deg);
+    opacity: 0.8;
+  }
+}
+
+@keyframes floating-refraction {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.6;
+  }
+  33% {
+    transform: rotate(120deg) scale(1.05);
+    opacity: 0.8;
+  }
+  66% {
+    transform: rotate(240deg) scale(0.95);
+    opacity: 0.4;
+  }
+}
+
+@keyframes light-ray-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes message-refraction {
+  0%,
+  100% {
+    transform: translateX(0%) skewX(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(10%) skewX(2deg);
+    opacity: 0.7;
+  }
+}
+
+@keyframes user-message-refraction {
+  0%,
+  100% {
+    transform: translateX(0%) skewX(0deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateX(-5%) skewX(-1deg);
+    opacity: 0.5;
+  }
+}
+
+@keyframes message-light-dance {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.4;
+  }
+  33% {
+    transform: scale(1.02) rotate(1deg);
+    opacity: 0.6;
+  }
+  66% {
+    transform: scale(0.98) rotate(-1deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes scrollbar-refraction {
+  0%,
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  50% {
+    filter: hue-rotate(10deg) brightness(1.1);
+  }
+}
+
+/* Additional glass morphism effects */
+@supports (backdrop-filter: blur()) {
+  .glass-morphism {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+}
+
+/* Hover animations for glass elements with refraction */
+@keyframes glass-glow-refraction {
+  0% {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+  }
+  50% {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transform: perspective(1000px) rotateX(0.5deg) rotateY(0.5deg);
+  }
+  100% {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+  }
+}
+
+.glass-hover:hover {
+  animation: glass-glow-refraction 0.6s ease-in-out;
+}
+
+/* Prism effect for intense refraction */
+.prism-refraction {
+  position: relative;
+}
+
+.prism-refraction::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 0, 150, 0.1) 0%,
+    rgba(0, 255, 255, 0.1) 25%,
+    rgba(255, 255, 0, 0.1) 50%,
+    rgba(255, 0, 255, 0.1) 75%,
+    rgba(0, 255, 0, 0.1) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.3;
+  animation: prism-shift 6s ease-in-out infinite;
+  mix-blend-mode: overlay;
+}
+
+@keyframes prism-shift {
+  0%,
+  100% {
+    transform: translateX(0%) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    transform: translateX(2%) scale(1.01);
+    filter: hue-rotate(90deg);
+  }
+  50% {
+    transform: translateX(0%) scale(1.02);
+    filter: hue-rotate(180deg);
+  }
+  75% {
+    transform: translateX(-2%) scale(1.01);
+    filter: hue-rotate(270deg);
+  }
+}
