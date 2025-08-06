@@ -1,14 +1,13 @@
 import type React from "react"
 import "@/app/globals.css"
-import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider"
+import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "Asistente del centro de ayuda",
   description: "Widget de asistente virtual para centro de ayuda",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -19,9 +18,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
+        {children}
       </body>
     </html>
   )
