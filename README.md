@@ -1,30 +1,118 @@
-# Replicate widget design
+# Clara - Widget de Diseño UI
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Widget de chat con efectos de cristal (glassmorphism) y animaciones de refracción de luz.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/tizeiraivan-gmailcoms-projects/v0-recreate-widget-extension)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/5SOmEbh6poy)
+## 🚀 Inicio Rápido
 
-## Overview
+### Prerrequisitos
+- Node.js 18+ 
+- npm o yarn
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+### Instalación
 
-## Deployment
+\`\`\`bash
+# Clonar el repositorio
+git clone [url-del-repositorio]
+cd clara
 
-Your project is live at:
+# Instalar dependencias
+npm install
+\`\`\`
 
-**[https://vercel.com/tizeiraivan-gmailcoms-projects/v0-recreate-widget-extension](https://vercel.com/tizeiraivan-gmailcoms-projects/v0-recreate-widget-extension)**
+### Desarrollo
 
-## Build your app
+\`\`\`bash
+# Ejecutar en modo desarrollo
+npm run dev
 
-Continue building your app on:
+# Abrir http://localhost:3000
+\`\`\`
 
-**[https://v0.dev/chat/projects/5SOmEbh6poy](https://v0.dev/chat/projects/5SOmEbh6poy)**
+### Producción
 
-## How It Works
+\`\`\`bash
+# Construir para producción
+npm run build
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+# Ejecutar en producción
+npm start
+\`\`\`
+
+## 🏗️ Estructura del Proyecto
+
+\`\`\`
+clara/
+├── app/                    # App Router de Next.js
+│   ├── globals.css        # Estilos globales y efectos de cristal
+│   ├── layout.tsx         # Layout principal
+│   └── page.tsx           # Página principal
+├── components/            # Componentes React
+│   ├── help-assistant-widget.tsx  # Widget principal
+│   └── ui/                # Componentes UI básicos
+│       ├── button.tsx
+│       └── card.tsx
+├── hooks/                 # Hooks personalizados
+│   └── use-mobile.tsx     # Detección de dispositivos móviles
+└── lib/                   # Utilidades
+    └── utils.ts           # Función cn para clases CSS
+\`\`\`
+
+## 🎯 Características de Diseño
+
+- ✅ Efectos de cristal (glassmorphism)
+- ✅ Animaciones de refracción de luz
+- ✅ Diseño responsivo
+- ✅ Widget minimizable/expandible
+- ✅ Estados visuales (chat, voz, conectando)
+- ✅ Indicadores de actividad animados
+- ✅ Scrollbar personalizado con efectos de cristal
+
+## 🎨 Personalización
+
+### Colores y Efectos
+
+Los efectos de cristal se pueden personalizar en \`app/globals.css\`:
+
+- Variables CSS en \`:root\` para colores base
+- Clases \`.glass-*\` para efectos de cristal
+- Animaciones \`@keyframes\` para refracciones de luz
+
+### Componente Principal
+
+El widget se puede personalizar modificando:
+- Estados visuales en \`components/help-assistant-widget.tsx\`
+- Colores en \`tailwind.config.ts\`
+- Efectos de cristal en \`app/globals.css\`
+
+## 📱 Estados del Widget
+
+1. **Minimizado**: Botón flotante con efectos de luz
+2. **Chat**: Interfaz de mensajes con burbujas de cristal
+3. **Voz**: Indicadores visuales de actividad de audio
+4. **Conectando**: Estado de carga con spinner
+
+## 🛠️ Tecnologías
+
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS + CSS personalizado
+- **Icons**: Lucide React
+- **TypeScript**: Tipado estático
+- **Efectos**: CSS backdrop-filter y animaciones
+
+## 📄 Uso
+
+\`\`\`tsx
+import HelpAssistantWidget from "@/components/help-assistant-widget"
+
+export default function Page() {
+  return (
+    <div className="min-h-screen p-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <HelpAssistantWidget />
+    </div>
+  )
+}
+\`\`\`
+
+## 📄 Licencia
+
+MIT License

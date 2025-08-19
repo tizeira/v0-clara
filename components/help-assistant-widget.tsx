@@ -1,11 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useCallback } from "react"
-import { Mic, ArrowLeft, Minus, MessageCircle, RotateCcw, Send, MicOff } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Mic, ArrowLeft, ChevronDown, MessageCircle, RotateCcw, Send, MicOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMobile } from "@/hooks/use-mobile"
-import { useElevenLabsConversation } from "@/hooks/use-elevenlabs-conversation"
 
 type WidgetState = "chat" | "voice" | "connecting"
 
@@ -19,7 +18,7 @@ export default function HelpAssistantWidget() {
   const [state, setState] = useState<WidgetState>("chat")
   const [messages, setMessages] = useState<Message[]>([
     {
-      text: "¡Hola! Soy tu asistente del Centro de ayuda virtual. Puedo ayudarte a encontrar la información que necesites o a conectarte con nuestro equipo de atención al cliente. ¿Cómo puedo ayudarte?",
+      text: "Hola ✨ Soy Clara, tu asistente en Beta. Me entrené con pasión por la cosmética para ayudarte a descubrir lo mejor para tu piel. Puedo guiarte paso a paso según tu tipo de piel, tus objetivos o simplemente recomendarte productos que te hagan sentir increíble. ¿Te gustaría empezar con una recomendación personalizada?",
       isUser: false,
       timestamp: new Date(),
     },
@@ -28,57 +27,55 @@ export default function HelpAssistantWidget() {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
   const isMobile = useMobile()
 
-  const { startConversation, endConversation, isConnected, isListening, isSpeaking, error, connectionStatus } =
-    useElevenLabsConversation({
-      agentId: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || "your-agent-id",
-      onMessage: (message, isUser) => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: message,
-            isUser,
-            timestamp: new Date(),
-          },
-        ])
-      },
-      onError: (error) => {
-        console.error("Conversation error:", error)
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Lo siento, ha ocurrido un error en la conversación. Por favor, inténtalo de nuevo.",
-            isUser: false,
-            timestamp: new Date(),
-          },
-        ])
-      },
-    })
-
-  const handleVoiceMode = useCallback(async () => {
+  const handleVoiceMode = () => {
     setState("connecting")
-    try {
-      await startConversation()
-      setState("voice")
-    } catch (error) {
-      console.error("Failed to start voice conversation:", error)
-      setState("chat")
+    // Simular conexión
+    setTimeout(() => {
+      setIsConnected(true)
+      setIsListening(true)
       setMessages((prev) => [
         ...prev,
         {
-          text: "No se pudo iniciar la conversación por voz. Por favor, verifica que el micrófono esté habilitado.",
+          text: "¡Hola! ✨ Ahora estamos conectados por voz. Cuéntame sobre tu tipo de piel, tus preocupaciones o qué productos te interesan, y te daré recomendaciones personalizadas.",
           isUser: false,
           timestamp: new Date(),
         },
       ])
-    }
-  }, [startConversation])
+      setState("voice")
 
-  const handleReturnToChat = useCallback(async () => {
-    await endConversation()
+      // Simular actividad de voz
+      const activityInterval = setInterval(() => {
+        if (Math.random() > 0.7) {
+          setIsListening(false)
+          setIsSpeaking(true)
+          setTimeout(
+            () => {
+              setIsSpeaking(false)
+              setIsListening(true)
+            },
+            2000 + Math.random() * 3000,
+          )
+        }
+      }, 5000)
+
+      // Limpiar después de 30 segundos para demo
+      setTimeout(() => {
+        clearInterval(activityInterval)
+      }, 30000)
+    }, 1500)
+  }
+
+  const handleReturnToChat = () => {
+    setIsConnected(false)
+    setIsListening(false)
+    setIsSpeaking(false)
     setState("chat")
-  }, [endConversation])
+  }
 
   const handleMinimize = () => {
     setIsTransitioning(true)
@@ -92,7 +89,7 @@ export default function HelpAssistantWidget() {
     setIsMinimized(false)
   }
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
     if (inputValue.trim()) {
       const userMessage = {
@@ -104,14 +101,14 @@ export default function HelpAssistantWidget() {
       setMessages((prev) => [...prev, userMessage])
       setInputValue("")
 
-      // Simulate AI response for text chat
+      // Simular respuesta del asistente
       setState("connecting")
       setTimeout(() => {
         setState("chat")
         setMessages((prev) => [
           ...prev,
           {
-            text: "Gracias por tu pregunta. Estoy procesando la información para ayudarte mejor. Para una experiencia más interactiva, puedes usar el modo de voz.",
+            text: "¡Perfecto! Estoy analizando tu consulta para darte la mejor recomendación de belleza. Para una experiencia más personalizada, puedes usar el modo de voz y contarme más detalles sobre tu piel.",
             isUser: false,
             timestamp: new Date(),
           },
@@ -122,7 +119,6 @@ export default function HelpAssistantWidget() {
 
   const handleMuteToggle = () => {
     setIsMuted(!isMuted)
-    // Here you would implement actual muting logic with the ElevenLabs SDK
   }
 
   // Auto-scroll to bottom when new messages arrive
@@ -136,10 +132,10 @@ export default function HelpAssistantWidget() {
   const widgetWidth = isMobile ? "w-full" : "w-full max-w-md"
 
   const getVoiceStatusText = () => {
-    if (connectionStatus === "connecting") return "Conectando..."
-    if (connectionStatus === "connected" && isSpeaking) return "El asistente está hablando..."
-    if (connectionStatus === "connected" && isListening) return "Escuchando..."
-    if (connectionStatus === "connected") return "Listo para conversar"
+    if (state === "connecting") return "Conectando..."
+    if (isConnected && isSpeaking) return "El asistente está hablando..."
+    if (isConnected && isListening) return "Escuchando..."
+    if (isConnected) return "Listo para conversar"
     return "Haz una pregunta"
   }
 
@@ -237,7 +233,7 @@ export default function HelpAssistantWidget() {
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border border-white animate-pulse"></div>
                   )}
                 </div>
-                <h1 className="text-base font-medium text-gray-800/90">Asistente del centro de ayuda</h1>
+                <h1 className="text-base font-medium text-gray-800/90">Clara – Asistente de Belleza de Beta</h1>
               </div>
               <button
                 onClick={handleMinimize}
@@ -252,8 +248,10 @@ export default function HelpAssistantWidget() {
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.02)"
                 }}
+                aria-label="Minimizar widget"
+                title="Minimizar"
               >
-                <Minus className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4" />
               </button>
             </div>
 
@@ -381,12 +379,6 @@ export default function HelpAssistantWidget() {
                     className="w-full border-t border-dashed mt-4"
                     style={{ borderColor: "rgba(255, 255, 255, 0.3)" }}
                   ></div>
-
-                  {error && (
-                    <div className="mt-4 p-3 bg-red-100/20 border border-red-200/30 rounded-lg">
-                      <p className="text-red-600/80 text-sm">{error}</p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -395,9 +387,7 @@ export default function HelpAssistantWidget() {
                   <div className="animate-spin mb-4">
                     <RotateCcw className="w-6 h-6 text-gray-600/80" />
                   </div>
-                  <p className="text-gray-600/80">
-                    {connectionStatus === "connecting" ? "Conectando con el asistente..." : "Conectando..."}
-                  </p>
+                  <p className="text-gray-600/80">Conectando con el asistente...</p>
                 </div>
               )}
             </div>
@@ -422,7 +412,7 @@ export default function HelpAssistantWidget() {
                 >
                   <input
                     type="text"
-                    placeholder="Pregunta cualquier cosa al asistente..."
+                    placeholder="Pregúntame sobre productos de belleza, rutinas de skincare..."
                     className="flex-1 py-3 px-1 bg-transparent focus:outline-none text-gray-800/90 placeholder-gray-600/60"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
