@@ -69,8 +69,8 @@ export default function HelpAssistantWidget() {
     isSpeaking: avatarSpeaking,
     isListening: avatarListening,
   } = useHeyGenAvatar({
-    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "default-avatar",
-    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "default-voice",
+    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "",
+    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "",
     quality: AvatarQuality.Medium,
     language: "es-ES",
     onMessage: async (message, isUser) => {
@@ -135,6 +135,15 @@ export default function HelpAssistantWidget() {
       }
     },
   })
+
+  // Extraer el stream del hook para renderizar el video (actualiza el destructuring)
+  const heygen = useHeyGenAvatar({
+    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "",
+    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "",
+    quality: AvatarQuality.Medium,
+    language: "es-ES",
+  })
+  const stream = heygen.stream
 
   const handleVoiceMode = () => {
     setState("voice")
@@ -464,6 +473,20 @@ export default function HelpAssistantWidget() {
 
               {(state === "voice" || state === "avatar") && messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
+                  {/* Mostrar el video del avatar si hay stream */}
+                  {state === "avatar" && avatarReady && stream && (
+                    <video
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full max-w-sm rounded-xl mb-4 shadow"
+                      ref={(el) => {
+                        if (el && stream) {
+                          if (el.srcObject !== stream) el.srcObject = stream as unknown as MediaStream
+                        }
+                      }}
+                    />
+                  )}
                   <div className="flex items-center gap-2 mb-2">
                     {state === "voice" ? (
                       <Mic

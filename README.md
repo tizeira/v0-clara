@@ -116,3 +116,44 @@ export default function Page() {
 ## 📄 Licencia
 
 MIT License
+
+## 🔐 Configuración de entorno
+
+Antes de ejecutar, configura tus variables de entorno:
+
+1. Copia el archivo `.env.example` a `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+2. Completa los valores:
+
+Para habilitar el avatar interactivo de HeyGen, crea un archivo `.env.local` en la raíz del proyecto (puedes usar `.env.local.example` como plantilla) con las siguientes variables:
+
+```
+NEXT_PUBLIC_BASE_API_URL=https://api.heygen.com
+HEYGEN_API_KEY=sk-tu-clave-de-heygen
+```
+
+- `HEYGEN_API_KEY` es obligatoria y se usa del lado del servidor para generar el token de sesión seguro.
+- `NEXT_PUBLIC_BASE_API_URL` es opcional; por defecto apunta a `https://api.heygen.com`.
+
+Luego instala dependencias y levanta el entorno de desarrollo:
+
+```
+npm install
+npm run dev
+```
+
+Prueba el endpoint de token localmente:
+
+```
+curl -X POST http://localhost:3000/api/heygen-token
+```
+
+Si ves un `500`, verifica:
+- Que `HEYGEN_API_KEY` esté definida correctamente en `.env.local` y reinicia el servidor de Next.js.
+- Que el firewall/red permita salir a `api.heygen.com`.
+- Los logs del servidor: debería imprimirse el detalle del error si la API de HeyGen responde con fallo.
+Reinicia el servidor de desarrollo después de cambiar `.env.local`.
