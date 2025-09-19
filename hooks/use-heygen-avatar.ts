@@ -20,7 +20,7 @@ export function useHeyGenAvatar({
   avatarId,
   voiceId,
   quality,
-  language = "es-ES",
+  language = "es",
   onMessage,
   onError,
   onStatusChange,
@@ -63,7 +63,7 @@ export function useHeyGenAvatar({
       avatarServiceRef.current = new HeyGenAvatarService(
         {
           token,
-          // Fallback a IDs públicos válidos si no se proveen
+          // Use proper defaults as in official demo
           avatarId: avatarId || "Alessandra_Chair_Sitting_public",
           voiceId: voiceId || "1e080de3d73e4225a7454797a848bffe",
           quality,
@@ -71,7 +71,10 @@ export function useHeyGenAvatar({
           basePath: process.env.NEXT_PUBLIC_BASE_API_URL,
         },
         {
-          onStream: (s) => setStream(s),
+          onStream: (s) => {
+            setStream(s)
+            console.log("Avatar stream received:", s)
+          },
           onReady: () => {
             updateStatus("ready")
             setIsInitialized(true)

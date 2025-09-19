@@ -68,11 +68,13 @@ export default function HelpAssistantWidget() {
     isReady: avatarReady,
     isSpeaking: avatarSpeaking,
     isListening: avatarListening,
+    stream: avatarStream,
   } = useHeyGenAvatar({
-    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "",
-    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "",
+    // Use proper defaults from the official demo
+    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "Alessandra_Chair_Sitting_public",
+    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "1e080de3d73e4225a7454797a848bffe",
     quality: AvatarQuality.Medium,
-    language: "es-ES",
+    language: "es",
     onMessage: async (message, isUser) => {
       // Agregar mensaje del usuario
       setMessages((prev) => [
@@ -135,15 +137,6 @@ export default function HelpAssistantWidget() {
       }
     },
   })
-
-  // Extraer el stream del hook para renderizar el video (actualiza el destructuring)
-  const heygen = useHeyGenAvatar({
-    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "",
-    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "",
-    quality: AvatarQuality.Medium,
-    language: "es-ES",
-  })
-  const stream = heygen.stream
 
   const handleVoiceMode = () => {
     setState("voice")
@@ -474,18 +467,28 @@ export default function HelpAssistantWidget() {
               {(state === "voice" || state === "avatar") && messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   {/* Mostrar el video del avatar si hay stream */}
-                  {state === "avatar" && avatarReady && stream && (
-                    <video
-                      autoPlay
-                      muted
-                      playsInline
-                      className="w-full max-w-sm rounded-xl mb-4 shadow"
-                      ref={(el) => {
-                        if (el && stream) {
-                          if (el.srcObject !== stream) el.srcObject = stream as unknown as MediaStream
-                        }
-                      }}
-                    />
+                  {state === "avatar" && avatarStream && (
+                    <div className="relative w-full max-w-sm mb-4">
+                      <video
+                        autoPlay
+                        muted
+                        playsInline
+                        className="w-full aspect-video rounded-xl shadow-lg"
+                        ref={(el) => {
+                          if (el && avatarStream) {
+                            el.srcObject = avatarStream
+                            el.onloadedmetadata = () => {
+                              el.play().catch(console.error)
+                            }
+                          }
+                        }}
+                      />
+                      {!avatarReady && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl">
+                          <div className="text-white text-sm">Cargando avatar...</div>
+                        </div>
+                      )}
+                    </div>
                   )}
                   <div className="flex items-center gap-2 mb-2">
                     {state === "voice" ? (

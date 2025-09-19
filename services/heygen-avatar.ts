@@ -78,9 +78,9 @@ export class HeyGenAvatarService {
   private setupEventListeners(): void {
     if (!this.avatar) return
 
-    this.avatar.on(StreamingEvents.STREAM_READY, ({ detail }) => {
+    this.avatar.on(StreamingEvents.STREAM_READY, (event: any) => {
       console.log("Avatar stream ready")
-      this.stream = detail as MediaStream
+      this.stream = event.detail as MediaStream
       this.callbacks.onStream?.(this.stream)
       this.callbacks.onReady?.()
     })
@@ -99,7 +99,7 @@ export class HeyGenAvatarService {
       console.log("User started speaking")
     })
 
-    this.avatar.on(StreamingEvents.USER_STOP, (event) => {
+    this.avatar.on(StreamingEvents.USER_STOP, (event: any) => {
       console.log("User stopped speaking:", event)
       if (event.userInput) {
         this.callbacks.onUserMessage?.(event.userInput)
