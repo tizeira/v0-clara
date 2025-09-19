@@ -20,7 +20,7 @@ export function useHeyGenAvatar({
   avatarId,
   voiceId,
   quality,
-  language = "es-ES",
+  language = "es",
   onMessage,
   onError,
   onStatusChange,
@@ -28,6 +28,7 @@ export function useHeyGenAvatar({
   const [status, setStatus] = useState<AvatarStatus>("disconnected")
   const [error, setError] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [stream, setStream] = useState<MediaStream | null>(null)
 
   const avatarServiceRef = useRef<HeyGenAvatarService | null>(null)
 
@@ -62,12 +63,18 @@ export function useHeyGenAvatar({
       avatarServiceRef.current = new HeyGenAvatarService(
         {
           token,
-          avatarId,
-          voiceId,
+          // Use proper defaults as in official demo
+          avatarId: avatarId || "Alessandra_Chair_Sitting_public",
+          voiceId: voiceId || "1e080de3d73e4225a7454797a848bffe",
           quality,
           language,
+          basePath: process.env.NEXT_PUBLIC_BASE_API_URL,
         },
         {
+          onStream: (s) => {
+            setStream(s)
+            console.log("Avatar stream received:", s)
+          },
           onReady: () => {
             updateStatus("ready")
             setIsInitialized(true)
@@ -185,6 +192,7 @@ export function useHeyGenAvatar({
     status,
     error,
     isInitialized,
+    stream,
     isReady: status === "ready" || status === "listening",
     isSpeaking: status === "speaking",
     isListening: status === "listening",

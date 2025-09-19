@@ -68,11 +68,13 @@ export default function HelpAssistantWidget() {
     isReady: avatarReady,
     isSpeaking: avatarSpeaking,
     isListening: avatarListening,
+    stream: avatarStream,
   } = useHeyGenAvatar({
-    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "default-avatar",
-    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "default-voice",
+    // Use proper defaults from the official demo
+    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "Alessandra_Chair_Sitting_public",
+    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "1e080de3d73e4225a7454797a848bffe",
     quality: AvatarQuality.Medium,
-    language: "es-ES",
+    language: "es",
     onMessage: async (message, isUser) => {
       // Agregar mensaje del usuario
       setMessages((prev) => [
@@ -464,6 +466,30 @@ export default function HelpAssistantWidget() {
 
               {(state === "voice" || state === "avatar") && messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
+                  {/* Mostrar el video del avatar si hay stream */}
+                  {state === "avatar" && avatarStream && (
+                    <div className="relative w-full max-w-sm mb-4">
+                      <video
+                        autoPlay
+                        muted
+                        playsInline
+                        className="w-full aspect-video rounded-xl shadow-lg"
+                        ref={(el) => {
+                          if (el && avatarStream) {
+                            el.srcObject = avatarStream
+                            el.onloadedmetadata = () => {
+                              el.play().catch(console.error)
+                            }
+                          }
+                        }}
+                      />
+                      {!avatarReady && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl">
+                          <div className="text-white text-sm">Cargando avatar...</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mb-2">
                     {state === "voice" ? (
                       <Mic

@@ -13,6 +13,8 @@ interface AvatarConfig {
   voiceId?: string
   quality?: AvatarQuality
   language?: string
+  // URL base para apuntar a distintos entornos de HeyGen (opcional)
+  basePath?: string
 }
 
 interface AvatarCallbacks {
@@ -21,12 +23,14 @@ interface AvatarCallbacks {
   onStopTalking?: () => void
   onError?: (error: string) => void
   onUserMessage?: (message: string) => void
+  onStream?: (stream: MediaStream) => void
 }
 
 export class HeyGenAvatarService {
   private avatar: StreamingAvatar | null = null
   private isInitialized = false
   private callbacks: AvatarCallbacks = {}
+  private stream: MediaStream | null = null
 
   constructor(
     private config: AvatarConfig,
@@ -41,6 +45,7 @@ export class HeyGenAvatarService {
 
       this.avatar = new StreamingAvatar({
         token: this.config.token,
+        basePath: this.config.basePath,
       })
 
       // Configurar event listeners
@@ -73,8 +78,10 @@ export class HeyGenAvatarService {
   private setupEventListeners(): void {
     if (!this.avatar) return
 
-    this.avatar.on(StreamingEvents.STREAM_READY, () => {
+    this.avatar.on(StreamingEvents.STREAM_READY, (event: any) => {
       console.log("Avatar stream ready")
+      this.stream = event.detail as MediaStream
+      this.callbacks.onStream?.(this.stream)
       this.callbacks.onReady?.()
     })
 
@@ -92,7 +99,7 @@ export class HeyGenAvatarService {
       console.log("User started speaking")
     })
 
-    this.avatar.on(StreamingEvents.USER_STOP, (event) => {
+    this.avatar.on(StreamingEvents.USER_STOP, (event: any) => {
       console.log("User stopped speaking:", event)
       if (event.userInput) {
         this.callbacks.onUserMessage?.(event.userInput)
@@ -102,6 +109,7 @@ export class HeyGenAvatarService {
     this.avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
       console.log("Avatar stream disconnected")
       this.isInitialized = false
+      this.stream = null
     })
   }
 
@@ -112,7 +120,7 @@ export class HeyGenAvatarService {
 
     try {
       await this.avatar.startVoiceChat({
-        useSilencePrompt: true,
+        // Algunos SDK solo aceptan 'isInputAudioMuted' en las opciones
         isInputAudioMuted: false,
       })
     } catch (error) {
@@ -130,7 +138,7 @@ export class HeyGenAvatarService {
     try {
       await this.avatar.speak({
         text,
-        task_type: TaskType.REPEAT,
+        taskType: TaskType.REPEAT,
         taskMode: TaskMode.SYNC,
       })
     } catch (error) {
@@ -175,21 +183,41 @@ export class HeyGenAvatarService {
   isReady(): boolean {
     return this.isInitialized && this.avatar !== null
   }
+
+  getStream(): MediaStream | null {
+    return this.stream
+  }
 }
 
 // Función helper para crear token de sesión
 export async function createHeyGenToken(apiKey: string): Promise<string> {
   try {
-    const response = await fetch("https://api.heygen.com/v1/streaming.create_token", {
+    const baseApiUrl =
+      process.env.NEXT_PUBLIC_BASE_API_URL?.replace(/\/$/, "") ||
+      "https://api.heygen.com"
+
+    const response = await fetch(`${baseApiUrl}/v1/streaming.create_token`, {
       method: "POST",
       headers: {
-        "X-Api-Key": apiKey,
-        "Content-Type": "application/json",
+        // Header estándar según la demo y docs
+        "x-api-key": apiKey,
       },
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      // Intentar extraer detalle del error para el log del servidor
+      let detail = ""
+      try {
+        const errBody = await response.json()
+        detail = JSON.stringify(errBody)
+      } catch {
+        try {
+          detail = await response.text()
+        } catch {
+          detail = "<no-body>"
+        }
+      }
+      throw new Error(`HeyGen token request failed: ${response.status} ${response.statusText} - ${detail}`)
     }
 
     const data = await response.json()
