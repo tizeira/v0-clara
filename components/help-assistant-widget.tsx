@@ -1,12 +1,15 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import { Mic, ArrowLeft, ChevronDown, MessageCircle, RotateCcw, Send, MicOff } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { Mic, ArrowLeft, ChevronDown, MessageCircle, RotateCcw, MicOff, Video, VideoOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMobile } from "@/hooks/use-mobile"
+import { useVoiceChat } from "@/hooks/use-voice-chat"
+import { useHeyGenAvatar } from "@/hooks/use-heygen-avatar"
+import { AvatarQuality } from "@heygen/streaming-avatar"
 
-type WidgetState = "chat" | "voice" | "connecting"
+type WidgetState = "chat" | "voice" | "avatar" | "connecting"
 
 interface Message {
   text: string
@@ -16,66 +19,147 @@ interface Message {
 
 export default function HelpAssistantWidget() {
   const [state, setState] = useState<WidgetState>("chat")
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      text: "Hola ✨ Soy Clara, tu asistente en Beta. Me entrené con pasión por la cosmética para ayudarte a descubrir lo mejor para tu piel. Puedo guiarte paso a paso según tu tipo de piel, tus objetivos o simplemente recomendarte productos que te hagan sentir increíble. ¿Te gustaría empezar con una recomendación personalizada?",
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isMinimized, setIsMinimized] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
-  const [isListening, setIsListening] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [isConnected, setIsConnected] = useState(false)
   const isMobile = useMobile()
 
-  const handleVoiceMode = () => {
-    setState("connecting")
-    // Simular conexión
-    setTimeout(() => {
-      setIsConnected(true)
-      setIsListening(true)
+  // Hook para chat de voz tradicional (STT + LLM)
+  const {
+    toggleRecording,
+    isRecording,
+    status: voiceStatus,
+    error: voiceError,
+  } = useVoiceChat({
+    onMessage: (message, isUser) => {
       setMessages((prev) => [
         ...prev,
         {
-          text: "¡Hola! ✨ Ahora estamos conectados por voz. Cuéntame sobre tu tipo de piel, tus preocupaciones o qué productos te interesan, y te daré recomendaciones personalizadas.",
+          text: message,
+          isUser,
+          timestamp: new Date(),
+        },
+      ])
+    },
+    onError: (error) => {
+      console.error("Voice chat error:", error)
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: `Error: ${error}`,
           isUser: false,
           timestamp: new Date(),
         },
       ])
-      setState("voice")
+    },
+  })
 
-      // Simular actividad de voz
-      const activityInterval = setInterval(() => {
-        if (Math.random() > 0.7) {
-          setIsListening(false)
-          setIsSpeaking(true)
-          setTimeout(
-            () => {
-              setIsSpeaking(false)
-              setIsListening(true)
+  // Hook para HeyGen Avatar
+  const {
+    initializeAvatar,
+    startVoiceChat: startAvatarChat,
+    speak: avatarSpeak,
+    stopVoiceChat: stopAvatarChat,
+    disconnect: disconnectAvatar,
+    status: avatarStatus,
+    error: avatarError,
+    isReady: avatarReady,
+    isSpeaking: avatarSpeaking,
+    isListening: avatarListening,
+  } = useHeyGenAvatar({
+    avatarId: process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "default-avatar",
+    voiceId: process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID || "default-voice",
+    quality: AvatarQuality.Medium,
+    language: "es-ES",
+    onMessage: async (message, isUser) => {
+      // Agregar mensaje del usuario
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: message,
+          isUser,
+          timestamp: new Date(),
+        },
+      ])
+
+      if (isUser) {
+        // Procesar mensaje del usuario con LLM
+        try {
+          const response = await fetch("/api/voice-chat-avatar", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-            2000 + Math.random() * 3000,
-          )
+            body: JSON.stringify({ userText: message }),
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            // Hacer que el avatar hable la respuesta
+            await avatarSpeak(result.botResponse)
+
+            // Agregar respuesta a los mensajes
+            setMessages((prev) => [
+              ...prev,
+              {
+                text: result.botResponse,
+                isUser: false,
+                timestamp: new Date(),
+              },
+            ])
+          }
+        } catch (error) {
+          console.error("Error processing user message:", error)
         }
-      }, 5000)
+      }
+    },
+    onError: (error) => {
+      console.error("Avatar error:", error)
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: `Error del avatar: ${error}`,
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ])
+    },
+    onStatusChange: (status) => {
+      if (status === "ready" || status === "listening" || status === "speaking") {
+        setState("avatar")
+      } else if (status === "connecting") {
+        setState("connecting")
+      }
+    },
+  })
 
-      // Limpiar después de 30 segundos para demo
-      setTimeout(() => {
-        clearInterval(activityInterval)
-      }, 30000)
-    }, 1500)
+  const handleVoiceMode = () => {
+    setState("voice")
+    toggleRecording()
   }
 
-  const handleReturnToChat = () => {
-    setIsConnected(false)
-    setIsListening(false)
-    setIsSpeaking(false)
+  const handleAvatarMode = useCallback(async () => {
+    setState("connecting")
+    try {
+      await startAvatarChat()
+    } catch (error) {
+      console.error("Failed to start avatar chat:", error)
+      setState("chat")
+    }
+  }, [startAvatarChat])
+
+  const handleReturnToChat = useCallback(async () => {
+    if (isRecording) {
+      toggleRecording()
+    }
+    if (state === "avatar") {
+      await stopAvatarChat()
+    }
     setState("chat")
-  }
+  }, [isRecording, state, toggleRecording, stopAvatarChat])
 
   const handleMinimize = () => {
     setIsTransitioning(true)
@@ -108,7 +192,7 @@ export default function HelpAssistantWidget() {
         setMessages((prev) => [
           ...prev,
           {
-            text: "¡Perfecto! Estoy analizando tu consulta para darte la mejor recomendación de belleza. Para una experiencia más personalizada, puedes usar el modo de voz y contarme más detalles sobre tu piel.",
+            text: "¡Perfecto! Estoy analizando tu consulta para darte la mejor recomendación de belleza. Para una experiencia más personalizada, puedes usar el modo de voz o avatar.",
             isUser: false,
             timestamp: new Date(),
           },
@@ -129,15 +213,48 @@ export default function HelpAssistantWidget() {
     }
   }, [messages])
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      disconnectAvatar()
+    }
+  }, [disconnectAvatar])
+
   const widgetWidth = isMobile ? "w-full" : "w-full max-w-md"
 
-  const getVoiceStatusText = () => {
-    if (state === "connecting") return "Conectando..."
-    if (isConnected && isSpeaking) return "El asistente está hablando..."
-    if (isConnected && isListening) return "Escuchando..."
-    if (isConnected) return "Listo para conversar"
-    return "Haz una pregunta"
+  const getStatusText = () => {
+    if (state === "voice") {
+      switch (voiceStatus) {
+        case "recording":
+          return "Escuchando..."
+        case "processing":
+          return "Procesando..."
+        case "speaking":
+          return "Clara está respondiendo..."
+        default:
+          return "Toca para hablar con Clara"
+      }
+    }
+
+    if (state === "avatar") {
+      switch (avatarStatus) {
+        case "connecting":
+          return "Conectando avatar..."
+        case "ready":
+          return "Avatar listo - Habla conmigo"
+        case "listening":
+          return "Avatar escuchando..."
+        case "speaking":
+          return "Clara está hablando..."
+        default:
+          return "Iniciando avatar..."
+      }
+    }
+
+    return "Conectando..."
   }
+
+  const isVoiceActive = voiceStatus !== "idle" || avatarStatus !== "disconnected"
 
   return (
     <>
@@ -156,8 +273,8 @@ export default function HelpAssistantWidget() {
           >
             <div className="absolute inset-0 pointer-events-none light-ray-animation rounded-full"></div>
             <MessageCircle className="w-7 h-7 relative z-10" />
-            {isConnected && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+            {isVoiceActive && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
             )}
           </button>
         </div>
@@ -185,9 +302,11 @@ export default function HelpAssistantWidget() {
               "flex flex-col h-[600px] relative backdrop-blur-3xl glass-surface",
               state === "voice"
                 ? "bg-gradient-to-b from-green-50/20 to-blue-50/10"
-                : state === "connecting"
-                  ? "bg-gradient-to-b from-purple-50/20 to-blue-50/10"
-                  : "bg-gradient-to-b from-white/10 to-white/5",
+                : state === "avatar"
+                  ? "bg-gradient-to-b from-purple-50/20 to-pink-50/10"
+                  : state === "connecting"
+                    ? "bg-gradient-to-b from-purple-50/20 to-blue-50/10"
+                    : "bg-gradient-to-b from-white/10 to-white/5",
             )}
           >
             {/* Header */}
@@ -229,7 +348,7 @@ export default function HelpAssistantWidget() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  {isConnected && (
+                  {isVoiceActive && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border border-white animate-pulse"></div>
                   )}
                 </div>
@@ -260,7 +379,16 @@ export default function HelpAssistantWidget() {
               id="message-container"
               className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
             >
-              {state === "chat" && (
+              {state === "chat" && messages.length === 0 && (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center text-gray-500/60">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p className="text-sm">Inicia una conversación</p>
+                  </div>
+                </div>
+              )}
+
+              {(state === "chat" || state === "voice" || state === "avatar") && messages.length > 0 && (
                 <div className="space-y-4">
                   {messages.map((message, index) => (
                     <div key={index} className={`flex ${message.isUser ? "justify-end" : "items-start gap-2"}`}>
@@ -334,17 +462,23 @@ export default function HelpAssistantWidget() {
                 </div>
               )}
 
-              {state === "voice" && (
+              {(state === "voice" || state === "avatar") && messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div className="flex items-center gap-2 mb-2">
-                    <Mic className={cn("w-5 h-5", isListening ? "text-green-600" : "text-gray-600/80")} />
-                    <span className="text-gray-600/80">Modo voz</span>
-                    {isConnected && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>}
+                    {state === "voice" ? (
+                      <Mic
+                        className={cn("w-5 h-5", voiceStatus === "recording" ? "text-green-600" : "text-gray-600/80")}
+                      />
+                    ) : (
+                      <Video className={cn("w-5 h-5", avatarListening ? "text-green-600" : "text-purple-600/80")} />
+                    )}
+                    <span className="text-gray-600/80">{state === "voice" ? "Modo voz" : "Modo avatar"}</span>
+                    {isVoiceActive && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>}
                   </div>
-                  <h2 className="text-xl font-medium mb-4 text-gray-800/90">{getVoiceStatusText()}</h2>
+                  <h2 className="text-xl font-medium mb-4 text-gray-800/90">{getStatusText()}</h2>
 
-                  {/* Voice Activity Indicator */}
-                  {isListening && (
+                  {/* Voice Activity Indicators */}
+                  {(voiceStatus === "recording" || avatarListening) && (
                     <div className="flex items-center gap-1 mb-8">
                       {[...Array(5)].map((_, i) => (
                         <div
@@ -359,7 +493,7 @@ export default function HelpAssistantWidget() {
                     </div>
                   )}
 
-                  {isSpeaking && (
+                  {(voiceStatus === "speaking" || avatarSpeaking) && (
                     <div className="flex items-center gap-1 mb-8">
                       {[...Array(7)].map((_, i) => (
                         <div
@@ -375,10 +509,22 @@ export default function HelpAssistantWidget() {
                     </div>
                   )}
 
+                  {voiceStatus === "processing" && (
+                    <div className="animate-spin mb-4">
+                      <RotateCcw className="w-6 h-6 text-gray-600/80" />
+                    </div>
+                  )}
+
                   <div
                     className="w-full border-t border-dashed mt-4"
                     style={{ borderColor: "rgba(255, 255, 255, 0.3)" }}
                   ></div>
+
+                  {(voiceError || avatarError) && (
+                    <div className="mt-4 p-3 bg-red-100/20 border border-red-200/30 rounded-lg">
+                      <p className="text-red-600/80 text-sm">{voiceError || avatarError}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -393,55 +539,37 @@ export default function HelpAssistantWidget() {
             </div>
 
             {/* Footer */}
-            {state === "chat" ? (
-              <form
-                onSubmit={handleSendMessage}
-                className="p-4 border-t backdrop-blur-3xl"
-                style={{
-                  background: "rgba(255, 255, 255, 0.08)",
-                  borderColor: "rgba(255, 255, 255, 0.15)",
-                }}
-              >
+            {state === "chat" && (
+              <div className="p-4 space-y-2">
                 <div
-                  className="flex items-center w-full rounded-full backdrop-blur-2xl px-3 transition-all duration-200"
+                  className="flex items-center justify-center w-full rounded-full backdrop-blur-2xl px-4 py-3 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
                   style={{
-                    background: "rgba(255, 255, 255, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.4)",
-                    boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
+                    background: "rgba(255, 255, 255, 0.4)",
+                    border: "1px solid rgba(255, 255, 255, 0.5)",
+                    boxShadow: "0 8px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
                   }}
+                  onClick={handleVoiceMode}
                 >
-                  <input
-                    type="text"
-                    placeholder="Pregúntame sobre productos de belleza, rutinas de skincare..."
-                    className="flex-1 py-3 px-1 bg-transparent focus:outline-none text-gray-800/90 placeholder-gray-600/60"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                  />
-                  {inputValue.trim() ? (
-                    <button
-                      type="submit"
-                      className="p-2 text-gray-700 hover:text-gray-900 transition-colors rounded-full"
-                      style={{
-                        background: "rgba(0, 0, 0, 0.05)",
-                      }}
-                    >
-                      <Send className="w-5 h-5" />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleVoiceMode}
-                      className="p-2 text-gray-700 hover:text-gray-900 transition-colors rounded-full"
-                      style={{
-                        background: "rgba(0, 0, 0, 0.05)",
-                      }}
-                    >
-                      <Mic className="w-5 h-5" />
-                    </button>
-                  )}
+                  <Mic className="w-5 h-5 text-gray-700 mr-2" />
+                  <span className="text-gray-800 font-medium">Llamada de voz con Clara</span>
                 </div>
-              </form>
-            ) : (
+
+                <div
+                  className="flex items-center justify-center w-full rounded-full backdrop-blur-2xl px-4 py-3 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                  style={{
+                    background: "rgba(147, 51, 234, 0.2)",
+                    border: "1px solid rgba(147, 51, 234, 0.3)",
+                    boxShadow: "0 8px 16px rgba(147, 51, 234, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.4)",
+                  }}
+                  onClick={handleAvatarMode}
+                >
+                  <Video className="w-5 h-5 text-purple-700 mr-2" />
+                  <span className="text-purple-800 font-medium">Video llamada con Clara</span>
+                </div>
+              </div>
+            )}
+
+            {(state === "voice" || state === "avatar") && (
               <div
                 className="grid grid-cols-2 gap-2 p-2 backdrop-blur-3xl border-t"
                 style={{
@@ -450,20 +578,39 @@ export default function HelpAssistantWidget() {
                 }}
               >
                 <button
-                  onClick={handleMuteToggle}
-                  className="flex items-center justify-center gap-2 py-3 backdrop-blur-2xl rounded-xl transition-all duration-200 hover:scale-[1.02]"
+                  onClick={state === "voice" ? toggleRecording : handleMuteToggle}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-3 backdrop-blur-2xl rounded-xl transition-all duration-200 hover:scale-[1.02]",
+                    isRecording || isMuted ? "bg-red-500/20 border-red-300/30" : "",
+                  )}
                   style={{
-                    background: "rgba(255, 255, 255, 0.25)",
-                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    background: isRecording || isMuted ? "rgba(239, 68, 68, 0.2)" : "rgba(255, 255, 255, 0.25)",
+                    border:
+                      isRecording || isMuted
+                        ? "1px solid rgba(239, 68, 68, 0.3)"
+                        : "1px solid rgba(255, 255, 255, 0.3)",
                     boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4)",
                   }}
                 >
-                  {isMuted ? (
-                    <MicOff className="w-5 h-5 text-red-600/90" />
+                  {state === "voice" ? (
+                    <>
+                      {isRecording ? (
+                        <MicOff className="w-5 h-5 text-red-600/90" />
+                      ) : (
+                        <Mic className="w-5 h-5 text-gray-700/90" />
+                      )}
+                      <span className="text-gray-700/90">{isRecording ? "Detener" : "Hablar"}</span>
+                    </>
                   ) : (
-                    <Mic className="w-5 h-5 text-gray-700/90" />
+                    <>
+                      {isMuted ? (
+                        <VideoOff className="w-5 h-5 text-red-600/90" />
+                      ) : (
+                        <Video className="w-5 h-5 text-gray-700/90" />
+                      )}
+                      <span className="text-gray-700/90">{isMuted ? "Activar" : "Silenciar"}</span>
+                    </>
                   )}
-                  <span className="text-gray-700/90">{isMuted ? "Activar" : "Silenciar"}</span>
                 </button>
                 <button
                   onClick={handleReturnToChat}
