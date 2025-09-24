@@ -112,7 +112,6 @@ export class HeyGenAvatarService {
 
     try {
       await this.avatar.startVoiceChat({
-        useSilencePrompt: true,
         isInputAudioMuted: false,
       })
     } catch (error) {
