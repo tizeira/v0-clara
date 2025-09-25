@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/Ubicacion Gamer/OneDrive/Desktop/clara-heygen/InteractiveAvatarNextJSDemo/components/logic/**)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Read(//c/Users/Ubicacion Gamer/OneDrive/Pictures/Screenshots/**)"
     ],
     "deny": [],
     "ask": []

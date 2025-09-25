@@ -17,10 +17,10 @@ import { useMemoizedFn, useUnmount } from "ahooks"
 
 const DEFAULT_CONFIG: StartAvatarRequest = {
   quality: AvatarQuality.High,
-  avatarName: "Alessandra_Chair_Sitting_public",
+  avatarName: "Alessandra_CasualLook_public",
   knowledgeId: "251ae2b8b812448d9d03efbc354c9b98",
   voice: {
-    voiceId: "ab9346d254a94ed8a4e662da7a5972d6",
+    voiceId: "1e080de3d73e4225a7454797a848bffe",
     rate: 1,
     emotion: VoiceEmotion.FRIENDLY,
   },
@@ -105,19 +105,19 @@ function ClaraWidgetMobile() {
     return "";
   };
 
-  return (
-    <div className="w-full space-y-6">
-      {/* Landing State - Before connection */}
-      {sessionState === StreamingAvatarSessionState.INACTIVE && (
-        <div className="text-center space-y-6">
-          <div className="space-y-3">
-            <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
-              <Video className="w-8 h-8 text-blue-600" />
+  // Landing State - Before connection
+  if (sessionState === StreamingAvatarSessionState.INACTIVE) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="text-center space-y-8 max-w-sm mx-auto">
+          <div className="space-y-4">
+            <div className="w-20 h-20 mx-auto bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 shadow-lg">
+              <Video className="w-10 h-10 text-slate-600" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-2xl font-bold text-slate-800">
               Habla con Clara
             </h2>
-            <p className="text-sm text-slate-600 max-w-xs mx-auto">
+            <p className="text-slate-600 leading-relaxed">
               Tu consultora virtual de skincare está lista para ayudarte con recomendaciones personalizadas
             </p>
           </div>
@@ -125,104 +125,124 @@ function ClaraWidgetMobile() {
           {/* Main CTA Button */}
           <button
             onClick={() => startSession(true)}
-            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+            className="w-full h-14 bg-blue-500/80 hover:bg-blue-500 backdrop-blur-md text-white font-semibold rounded-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 border border-blue-400/30 shadow-lg"
           >
-            <Phone className="w-5 h-5" />
+            <Phone className="w-6 h-6" />
             Iniciar Llamada con Clara
           </button>
 
           {/* Secondary option */}
           <button
             onClick={() => startSession(false)}
-            className="w-full h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+            className="w-full h-14 bg-white/20 hover:bg-white/30 backdrop-blur-md text-slate-700 font-medium rounded-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 border border-white/30 shadow-sm"
           >
-            <Video className="w-5 h-5" />
+            <Video className="w-6 h-6" />
             Iniciar Chat de Video
           </button>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Connecting State */}
-      {sessionState === StreamingAvatarSessionState.CONNECTING && (
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+  // Connecting State
+  if (sessionState === StreamingAvatarSessionState.CONNECTING) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="text-center space-y-6">
+          <div className="w-20 h-20 mx-auto bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 shadow-lg">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <div>
-            <h3 className="text-lg font-medium text-slate-900 mb-1">Conectando...</h3>
-            <p className="text-sm text-slate-600">Iniciando video llamada con Clara</p>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-slate-800">Conectando...</h3>
+            <p className="text-slate-600">Iniciando video llamada con Clara</p>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Connected State - Video Active */}
-      {sessionState === StreamingAvatarSessionState.CONNECTED && (
-        <div className="space-y-4">
-          {/* Status */}
-          <div className="text-center">
-            <p className="text-sm font-medium text-slate-700">{getStatusText()}</p>
-            {isVoiceChatActive && (
-              <div className="flex items-center justify-center gap-1 mt-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-600">Conectada</span>
-              </div>
-            )}
-          </div>
+  // Connected State - Fixed Vertical Layout
+  return (
+    <div
+      className="min-h-screen flex flex-col"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)'
+      }}
+    >
+      {/* Top Status Bar - Fixed Height */}
+      <div className="flex-shrink-0 px-6 pt-4 pb-2">
+        <div className="bg-white/20 backdrop-blur-md rounded-2xl px-6 py-3 border border-white/30 mx-auto max-w-xs shadow-lg">
+          <p className="text-slate-800 font-medium text-center text-sm">{getStatusText()}</p>
+          {isVoiceChatActive && (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-600 font-medium">Conectada</span>
+            </div>
+          )}
+        </div>
+      </div>
 
-          {/* Video Container - Fixed size for mobile */}
-          <div className="relative">
-            <div className="w-full max-w-[280px] mx-auto bg-slate-100 rounded-xl overflow-hidden shadow-sm">
-              <div className="aspect-[4/3] relative">
-                {stream ? (
-                  <AvatarVideo
-                    ref={mediaStream}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-50">
-                    <div className="text-center space-y-2">
-                      <Video className="w-8 h-8 text-slate-400 mx-auto" />
-                      <p className="text-xs text-slate-500">Iniciando video...</p>
-                    </div>
+      {/* Clara Video Container - Maximum Height */}
+      <div className="flex-1 relative overflow-hidden">
+        <div className="absolute inset-0 p-4">
+          {/* Video Frame - Full available space */}
+          <div className="w-full h-full bg-white/90 backdrop-blur-md rounded-3xl overflow-hidden shadow-xl border border-slate-200/40 relative">
+            <div className="w-full h-full relative">
+              {stream ? (
+                <AvatarVideo
+                  ref={mediaStream}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-50/50 backdrop-blur-sm">
+                  <div className="text-center space-y-4">
+                    <Video className="w-12 h-12 text-slate-400 mx-auto" />
+                    <p className="text-slate-600">Iniciando video...</p>
                   </div>
-                )}
+                </div>
+              )}
+
+              {/* Voice Activity Indicators Over Video */}
+              {isUserTalking && (
+                <div className="absolute top-6 left-6">
+                  <div className="bg-green-500/90 backdrop-blur-md text-white text-sm px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg border border-green-400/30">
+                    <Mic className="w-3 h-3" />
+                    <span className="text-xs font-medium">Te escucho</span>
+                  </div>
+                </div>
+              )}
+
+              {isAvatarTalking && (
+                <div className="absolute top-6 right-6">
+                  <div className="bg-blue-500/90 backdrop-blur-md text-white text-sm px-3 py-1.5 rounded-full shadow-lg border border-blue-400/30">
+                    <span className="text-xs font-medium">Clara respondiendo</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Controls Overlay */}
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex flex-col items-center space-y-4">
+                  {/* Voice Interface Button */}
+                  {isVoiceMode && (
+                    <VoiceInterface isActive={true} />
+                  )}
+
+                  {/* End Call Button */}
+                  <button
+                    onClick={handleStopSession}
+                    className="bg-red-500/90 hover:bg-red-500 backdrop-blur-md text-white font-semibold px-8 py-4 rounded-2xl transition-all duration-200 active:scale-95 flex items-center gap-3 shadow-lg border border-red-400/30 min-h-[56px]"
+                  >
+                    <PhoneOff className="w-6 h-6" />
+                    Terminar Llamada
+                  </button>
+                </div>
               </div>
             </div>
-
-            {/* Voice activity indicators */}
-            {isUserTalking && (
-              <div className="absolute top-2 left-2">
-                <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                  <Mic className="w-3 h-3" />
-                  Hablando
-                </div>
-              </div>
-            )}
-
-            {isAvatarTalking && (
-              <div className="absolute top-2 right-2">
-                <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                  Clara respondiendo
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Controls - Touch friendly */}
-          <div className="space-y-3">
-            {isVoiceMode && <VoiceInterface isActive={true} />}
-
-            {/* End call button */}
-            <button
-              onClick={handleStopSession}
-              className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
-            >
-              <PhoneOff className="w-5 h-5" />
-              Terminar Llamada
-            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

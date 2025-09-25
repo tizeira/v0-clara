@@ -31,60 +31,21 @@ export function VoiceInterface({ isActive }: VoiceInterfaceProps) {
   if (!isActive) return null;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      {/* Voice Activity Indicators - Simplified for mobile */}
-      {isUserTalking && (
-        <div className="flex items-center gap-1">
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="w-1 h-4 bg-green-500 rounded-full animate-pulse"
-              style={{
-                animationDelay: `${i * 0.1}s`,
-              }}
-            />
-          ))}
-        </div>
+    <button
+      onClick={handleMicToggle}
+      disabled={isVoiceChatLoading}
+      className={cn(
+        "w-14 h-14 rounded-full transition-all duration-200 active:scale-95 flex items-center justify-center backdrop-blur-md border shadow-lg",
+        isMuted
+          ? "bg-red-500/80 hover:bg-red-500 text-white border-red-400/30"
+          : "bg-white/20 hover:bg-white/30 text-slate-700 border-white/30"
       )}
-
-      {isAvatarTalking && (
-        <div className="flex items-center gap-1">
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="w-1 bg-blue-500 rounded-full animate-bounce"
-              style={{
-                height: `${12 + Math.random() * 8}px`,
-                animationDelay: `${i * 0.1}s`,
-              }}
-            />
-          ))}
-        </div>
+    >
+      {isMuted ? (
+        <MicOff className="w-6 h-6" />
+      ) : (
+        <Mic className="w-6 h-6" />
       )}
-
-      {/* Mobile-friendly mic control */}
-      <button
-        onClick={handleMicToggle}
-        disabled={isVoiceChatLoading}
-        className={cn(
-          "w-full h-11 rounded-lg font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2",
-          isMuted
-            ? "bg-red-100 hover:bg-red-200 text-red-700 border border-red-200"
-            : "bg-green-100 hover:bg-green-200 text-green-700 border border-green-200"
-        )}
-      >
-        {isMuted ? (
-          <>
-            <MicOff className="w-4 h-4" />
-            Activar Micrófono
-          </>
-        ) : (
-          <>
-            <Mic className="w-4 h-4" />
-            Silenciar
-          </>
-        )}
-      </button>
-    </div>
+    </button>
   );
 }
